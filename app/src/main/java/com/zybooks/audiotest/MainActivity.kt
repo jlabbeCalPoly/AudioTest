@@ -6,6 +6,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,7 +38,27 @@ import kotlinx.coroutines.delay
 import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.math.absoluteValue
+import com.zybooks.audiotest.GraphicalViewModel
+import com.zybooks.audiotest.GraphicalScreen
 
+
+class MainActivity: ComponentActivity() {
+    private val graphicalViewModel = GraphicalViewModel()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent{
+            Surface (
+                modifier = Modifier.fillMaxSize()
+            ) {
+                GraphicalScreen(graphicalViewModel = graphicalViewModel, activity = this)
+            }
+        }
+    }
+}
+
+/*
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -139,3 +161,4 @@ fun GreetingPreview() {
         Greeting("Android")
     }
 }
+*/
