@@ -40,6 +40,7 @@ import java.nio.ByteBuffer
 import kotlin.math.absoluteValue
 import com.zybooks.audiotest.GraphicalViewModel
 import com.zybooks.audiotest.GraphicalScreen
+import com.zybooks.audiotest.ui.theme.AudioTestTheme
 
 
 class MainActivity: ComponentActivity() {
@@ -49,10 +50,12 @@ class MainActivity: ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent{
-            Surface (
-                modifier = Modifier.fillMaxSize()
-            ) {
-                GraphicalScreen(graphicalViewModel = graphicalViewModel, activity = this)
+            AudioTestTheme(dynamicColor = false) {
+                Surface (
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    GraphicalScreen(graphicalViewModel = graphicalViewModel, activity = this)
+                }
             }
         }
     }

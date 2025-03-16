@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,12 +32,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlin.math.roundToInt
+import com.zybooks.audiotest.ui.theme.Blue as BLUE_COLOR
 
 @Composable
 fun GraphicalScreen (
@@ -81,13 +85,12 @@ fun GraphicalScreen (
                 modifier = Modifier
                     .weight(1f)
                     .height(200.dp)
-                    .background(Color.LightGray)
+                  //  .background(Color.LightGray)
             ) {
                 Canvas(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     graphicalViewModel.setGraphSize(size.width, size.height)
-
                     // Draw horizontal grid lines
                     //if (graphicalViewModel.isRunning) {
                     //    val yAxisLabels = graphicalViewModel.getYAxisLabelValues()
@@ -109,9 +112,11 @@ fun GraphicalScreen (
                     if(graphicalViewModel.path != null) {
                         drawPath(
                             graphicalViewModel.path!!,
-                            color = Color.Blue,
+                            color = BLUE_COLOR,
                             style = Stroke(width = 3f)
                         )
+                    } else {
+                        Log.d("Debug graph", "Path is null")
                     }
                 }
             }
