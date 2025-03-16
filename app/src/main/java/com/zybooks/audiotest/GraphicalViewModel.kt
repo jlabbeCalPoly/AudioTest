@@ -9,6 +9,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
+import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +27,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -46,9 +48,13 @@ class GraphicalViewModel : ViewModel() {
     // Y-axis range values for dynamic scaling
     var currentMaxAmplitude: Float = 1f
     var currentMinAmplitude: Float = -1f
+    var graphicalAmplitude: Float = 1f
 
     // Number of divisions for Y-axis labels (excluding zero)
     val yAxisDivisions = 4
+    // Stores the values for the Y-axis labels
+    var yAxisLabels: List<Float>? by mutableStateOf(null)
+        private set
 
     fun setGraphSize(width: Float, height: Float) {
         this.width = width
@@ -61,8 +67,9 @@ class GraphicalViewModel : ViewModel() {
         if(!isRunning) {
             isRunning = true
             // Reset amplitude values
-            currentMaxAmplitude = 1f
-            currentMinAmplitude = -1f
+            currentMaxAmplitude = 0.1f
+            currentMinAmplitude = -0.1f
+            graphicalAmplitude = 0.1f
 
             val buffer = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
             val recorder = AudioRecord( MediaRecorder.AudioSource.MIC,
@@ -75,8 +82,9 @@ class GraphicalViewModel : ViewModel() {
 
             fun smoothData(data: ShortArray, readSize: Int): List<Float> {
                 val chunkSize = readSize / 200
-                val smoothedData = data.toList().chunked(chunkSize).map { chunk ->
-                    val filtered = chunk.filter { it > 5 }
+                var smoothedData = data.toList().chunked(chunkSize).map { chunk ->
+//                    val filtered = chunk.filter { it < 5 }
+                    val filtered = chunk
                     if (filtered.isNotEmpty()) {
                         filtered.average().toFloat()
                     } else {
@@ -85,15 +93,36 @@ class GraphicalViewModel : ViewModel() {
                 }
 
                 // Apply moving average to further smooth data
-                val windowSize = 5  // Number of points to average
-                return smoothedData.mapIndexed { index, _ ->
-                    smoothedData.slice(index until min(index + windowSize, smoothedData.size)).average().toFloat()
+                val windowSize = 5  // Number of points to
+                val max = smoothedData.max()
+                val min = smoothedData.min()
+                val avg = (max - min)/2
+                var counter = 0
+                while(counter < 50) {
+                    smoothedData = smoothedData.mapIndexed { index, currentValue ->
+                        var smoothed = currentValue
+                        if (index != 0 && index < smoothedData.size - 1) {
+                            // if the currentValue is equal to either the max or min, don't do any smoothing
+                            if (currentValue != max && currentValue != min) {
+                                // use the previous and following data points to determine an average
+                                val average = smoothedData.slice(index - 1..index + 1).average()
+                                val valueDifference = average - currentValue
+                                // smooth in a way where points near extremities move to a lesser extent
+                                val offset = min(abs(max - currentValue), abs(min - currentValue)) / avg * valueDifference
+                                smoothed = (smoothed + offset).toFloat()
+                            }
+                        }
+                        // map the new smoothed value to the current index
+                        smoothed
+                    }
+                    counter++
                 }
+                return smoothedData
             }
 
             fun buildPath(readSize: Int) {
                 var xOffset = 0f
-                val smoothedData = smoothData(shortArray, readSize)
+                val smoothedData = smoothData(shortArray.copyOf(), readSize)
 
                 // Find the max amplitude in the smoothed data
                 val dataMax = smoothedData.maxOrNull() ?: 1f
@@ -101,16 +130,21 @@ class GraphicalViewModel : ViewModel() {
 
                 // Update the max and min amplitudes with smoothing
                 // Use a damping factor to gradually adjust the range (prevents too rapid changes)
-                val dampingFactor = 0.7f
-                currentMaxAmplitude = max(dataMax, currentMaxAmplitude * dampingFactor)
-                currentMinAmplitude = min(dataMin, currentMinAmplitude * dampingFactor)
+                //val dampingFactor = 0.7f
+                val currentMaxAmplitude = max(dataMax, 1f)
+                val currentMinAmplitude = min(dataMin, -1f)
+
+                graphicalAmplitude = max(abs(currentMaxAmplitude), abs(currentMinAmplitude))
 
                 // Ensure we have a minimum range to prevent division by zero
-                val range = max(currentMaxAmplitude - currentMinAmplitude, 10f)
+                //val range = max(currentMaxAmplitude - currentMinAmplitude, 10f)
 
                 // Calculate scale to fit in view
-                val amplitudeScale = height / range
+                //val amplitudeScale = height / range
                 val lineWidth = width / smoothedData.size
+
+                // update the YAxis labels, will automatically recompose in GraphicalScreen.kt
+                getYAxisLabelValues()
 
                 path = Path().apply {
                     reset()
@@ -118,8 +152,14 @@ class GraphicalViewModel : ViewModel() {
 
                     for (data in smoothedData) {
                         // Scale relative to the dynamic range
-                        val normalizedData = (data - currentMinAmplitude) / range
-                        val yOffset = height - (normalizedData * height)
+                        //val normalizedData = (data - currentMinAmplitude) / range
+                        //val yOffset = height - (normalizedData * height / 2)
+                        // if the graphicalAmplitude is over 1f, this indicates that scaling is needed
+                        var offset = data
+                        if (graphicalAmplitude > 1f) {
+
+                        }
+                        val yOffset = height/2 + offset
                         xOffset += lineWidth
 
                         lineTo(xOffset, yOffset)
@@ -145,7 +185,6 @@ class GraphicalViewModel : ViewModel() {
                         while(isRunning) {
                             val readData = readData()
                             if (readData != null && readData > 0) {
-                                Log.d("Reading", ""+readData)
                                 buildPath(readData)
                             }
                         }
@@ -171,13 +210,14 @@ class GraphicalViewModel : ViewModel() {
     }
 
     // Helper function to get Y-axis label values
-    fun getYAxisLabelValues(): List<Float> {
-        val range = currentMaxAmplitude - currentMinAmplitude
+    fun getYAxisLabelValues() {
+        val max = graphicalAmplitude
+        val range = max * 2
         val step = range / yAxisDivisions
         val labels = mutableListOf<Float>()
         for (i in 0..yAxisDivisions) {
-            labels.add(currentMinAmplitude + (step * i))
+            labels.add(max - (step * i))
         }
-        return labels
+        yAxisLabels = labels
     }
 }

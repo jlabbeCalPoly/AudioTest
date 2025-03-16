@@ -58,20 +58,22 @@ fun GraphicalScreen (
                 modifier = Modifier
                     .width(50.dp)
                     .height(200.dp)
-                    .padding(end = 4.dp),
+                    .padding(end = 20.dp),
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.End
             ) {
                 if (graphicalViewModel.isRunning) {
-                    val yAxisLabels = graphicalViewModel.getYAxisLabelValues()
-                    // Display labels from top to bottom
-                    for (i in yAxisLabels.size - 1 downTo 0) {
-                        Text(
-                            text = yAxisLabels[i].roundToInt().toString(),
-                            style = TextStyle(fontSize = 10.sp, color = Color.DarkGray),
-                            textAlign = TextAlign.End,
-                            modifier = Modifier.padding(vertical = 2.dp)
-                        )
+                    if (graphicalViewModel.yAxisLabels != null) {
+                        //val yAxisLabels = graphicalViewModel.yAxisLabels
+                        // Display labels from top to bottom
+                        graphicalViewModel.yAxisLabels!!.map { value ->
+                            Text(
+                                text = String.format("%.2f", value),
+                                style = TextStyle(fontSize = 10.sp, color = Color.DarkGray),
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -89,21 +91,21 @@ fun GraphicalScreen (
                     graphicalViewModel.setGraphSize(size.width, size.height)
 
                     // Draw horizontal grid lines
-                    if (graphicalViewModel.isRunning) {
-                        val yAxisLabels = graphicalViewModel.getYAxisLabelValues()
-                        val step = size.height / (yAxisLabels.size - 1)
+                    //if (graphicalViewModel.isRunning) {
+                    //    val yAxisLabels = graphicalViewModel.getYAxisLabelValues()
+                    //    val step = size.height / (yAxisLabels.size - 1)
 
                         // Draw grid lines for each y-axis point
-                        for (i in yAxisLabels.indices) {
-                            val y = size.height - (i * step)
-                            drawLine(
-                                color = Color.Gray.copy(alpha = 0.5f),
-                                start = Offset(0f, y),
-                                end = Offset(size.width, y),
-                                strokeWidth = 1f
-                            )
-                        }
-                    }
+                    //    for (i in yAxisLabels.indices) {
+                    //        val y = size.height - (i * step)
+                    //        drawLine(
+                    //            color = Color.Gray.copy(alpha = 0.5f),
+                    //            start = Offset(0f, y),
+                    //            end = Offset(size.width, y),
+                    //            strokeWidth = 1f
+                    //        )
+                    //    }
+                    //}
 
                     // Draw the waveform path
                     if(graphicalViewModel.path != null) {
