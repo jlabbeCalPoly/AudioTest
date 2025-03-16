@@ -134,6 +134,7 @@ class GraphicalViewModel : ViewModel() {
                 val currentMaxAmplitude = max(dataMax, 1f)
                 val currentMinAmplitude = min(dataMin, -1f)
 
+                val bound = max(abs(dataMax), abs(dataMin))
                 graphicalAmplitude = max(abs(currentMaxAmplitude), abs(currentMinAmplitude))
 
                 // Ensure we have a minimum range to prevent division by zero
@@ -155,10 +156,10 @@ class GraphicalViewModel : ViewModel() {
                         //val normalizedData = (data - currentMinAmplitude) / range
                         //val yOffset = height - (normalizedData * height / 2)
                         // if the graphicalAmplitude is over 1f, this indicates that scaling is needed
-                        var offset = data
-                        if (graphicalAmplitude > 1f) {
-
-                        }
+                        var offset = data/bound * height/2
+                        //if (abs(data) > 10) {
+                        //    offset *= height/2
+                        //}
                         val yOffset = height/2 + offset
                         xOffset += lineWidth
 

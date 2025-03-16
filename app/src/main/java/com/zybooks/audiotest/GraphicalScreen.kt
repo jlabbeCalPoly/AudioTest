@@ -62,7 +62,6 @@ fun GraphicalScreen (
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.End
             ) {
-                if (graphicalViewModel.isRunning) {
                     if (graphicalViewModel.yAxisLabels != null) {
                         //val yAxisLabels = graphicalViewModel.yAxisLabels
                         // Display labels from top to bottom
@@ -76,7 +75,6 @@ fun GraphicalScreen (
                         }
                     }
                 }
-            }
 
             // Graph area
             Box(
