@@ -31,6 +31,8 @@ import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zybooks.audiotest.ui.theme.AudioTestTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,9 +44,9 @@ import com.zybooks.audiotest.GraphicalViewModel
 import com.zybooks.audiotest.GraphicalScreen
 import com.zybooks.audiotest.ui.theme.AudioTestTheme
 
+private val graphicalViewModel = GraphicalViewModel()
 
 class MainActivity: ComponentActivity() {
-    private val graphicalViewModel = GraphicalViewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

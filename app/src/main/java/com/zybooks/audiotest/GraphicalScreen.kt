@@ -77,6 +77,8 @@ fun GraphicalScreen (
                                 modifier = Modifier.padding(vertical = 2.dp)
                             )
                         }
+                    } else {
+                        Log.d("yAxisLabels", "yAxisLabels are null")
                     }
                 }
 
