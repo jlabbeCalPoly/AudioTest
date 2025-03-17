@@ -3,9 +3,11 @@ package com.zybooks.audiotest
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +32,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +44,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlin.math.roundToInt
 import com.zybooks.audiotest.ui.theme.Blue as BLUE_COLOR
+import com.zybooks.audiotest.ui.theme.White as WHITE_COLOR
 
 @Composable
 fun GraphicalScreen (
@@ -48,16 +52,29 @@ fun GraphicalScreen (
     graphicalViewModel: GraphicalViewModel = viewModel(),
     activity: Activity
 ) {
+    val config = LocalConfiguration.current
+    if (config.orientation == Configuration.ORIENTATION_PORTRAIT) {
+        PortraitOrientationLayout(modifier, graphicalViewModel, activity)
+    } else { // The orientation is in landscape mode
+
+    }
+}
+
+// Orientation layouts
+@Composable
+fun PortraitOrientationLayout(
+    modifier: Modifier = Modifier,
+    graphicalViewModel: GraphicalViewModel,
+    activity: Activity
+) {
     Column (
-        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(200.dp),
+            modifier = Modifier.fillMaxWidth().height(200.dp).padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Y-axis labels column
             Column(
                 modifier = Modifier
                     .width(50.dp)
@@ -66,49 +83,28 @@ fun GraphicalScreen (
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.End
             ) {
-                    if (graphicalViewModel.yAxisLabels != null) {
-                        //val yAxisLabels = graphicalViewModel.yAxisLabels
-                        // Display labels from top to bottom
-                        graphicalViewModel.yAxisLabels!!.map { value ->
-                            Text(
-                                text = String.format("%.2f", value),
-                                style = TextStyle(fontSize = 10.sp, color = Color.DarkGray),
-                                textAlign = TextAlign.End,
-                                modifier = Modifier.padding(vertical = 2.dp)
-                            )
-                        }
-                    } else {
-                        Log.d("yAxisLabels", "yAxisLabels are null")
+                if (graphicalViewModel.yAxisLabels != null) {
+                    graphicalViewModel.yAxisLabels!!.map { value ->
+                        Text(
+                            text = String.format("%.2f", value),
+                            style = TextStyle(fontSize = 10.sp, color = Color.DarkGray),
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        )
                     }
                 }
-
-            // Graph area
+            }
             Box(
                 modifier = Modifier
-                    .weight(1f)
                     .height(200.dp)
-                  //  .background(Color.LightGray)
+                    .border(2.dp, WHITE_COLOR)
             ) {
                 Canvas(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    // determine the size of the graph, needed to ensure that
+                    // the generated paths stay within the bounds
                     graphicalViewModel.setGraphSize(size.width, size.height)
-                    // Draw horizontal grid lines
-                    //if (graphicalViewModel.isRunning) {
-                    //    val yAxisLabels = graphicalViewModel.getYAxisLabelValues()
-                    //    val step = size.height / (yAxisLabels.size - 1)
-
-                        // Draw grid lines for each y-axis point
-                    //    for (i in yAxisLabels.indices) {
-                    //        val y = size.height - (i * step)
-                    //        drawLine(
-                    //            color = Color.Gray.copy(alpha = 0.5f),
-                    //            start = Offset(0f, y),
-                    //            end = Offset(size.width, y),
-                    //            strokeWidth = 1f
-                    //        )
-                    //    }
-                    //}
 
                     // Draw the waveform path
                     if(graphicalViewModel.path != null) {
@@ -117,8 +113,6 @@ fun GraphicalScreen (
                             color = BLUE_COLOR,
                             style = Stroke(width = 3f)
                         )
-                    } else {
-                        Log.d("Debug graph", "Path is null")
                     }
                 }
             }
@@ -130,6 +124,15 @@ fun GraphicalScreen (
             Text(if (graphicalViewModel.isRunning) "Stop" else "Start")
         }
     }
+}
+
+@Composable
+fun LandscapeOrientationLayout(
+    modifier: Modifier = Modifier,
+    graphicalViewModel: GraphicalViewModel = viewModel(),
+    activity: Activity
+) {
+
 }
 
 fun startGraphical(activity: Activity, graphicalViewModel: GraphicalViewModel) {

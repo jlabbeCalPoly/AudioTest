@@ -72,7 +72,8 @@ class GraphicalViewModel : ViewModel() {
 
     fun resizeGraph() {
         if (smoothedData != null) {
-            val currentData = smoothedData!!
+            Log.d("Resize", "Resize")
+            val currentData = smoothedData?: return
 
             // Find the max amplitude in the smoothed data
             val dataMax = currentData.maxOrNull() ?: 1f
