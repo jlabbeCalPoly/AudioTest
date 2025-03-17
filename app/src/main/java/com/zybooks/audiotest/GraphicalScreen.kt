@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -68,18 +69,19 @@ fun PortraitOrientationLayout(
     activity: Activity
 ) {
     Column (
+        modifier = Modifier.fillMaxHeight().padding(top = 50.dp, bottom = 10.dp),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(200.dp).padding(10.dp),
+            modifier = Modifier.fillMaxSize().padding(10.dp).weight(0.5f),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // The y-axis labels on the left side of the graph
             Column(
                 modifier = Modifier
-                    .width(50.dp)
-                    .height(200.dp)
+                    .fillMaxHeight()
+                    .width(60.dp)
                     .padding(end = 20.dp),
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.End
@@ -98,7 +100,7 @@ fun PortraitOrientationLayout(
             // the graph
             Box(
                 modifier = Modifier
-                    .height(200.dp)
+                    .fillMaxHeight()
                     .border(2.dp, WHITE_COLOR)
             ) {
                 Canvas(
@@ -119,11 +121,38 @@ fun PortraitOrientationLayout(
                 }
             }
         }
-
-        Button(
-            onClick = { startGraphical(activity = activity, graphicalViewModel = graphicalViewModel) }
+        Column (
+            Modifier.padding(bottom = 20.dp, start = 20.dp, end = 20.dp).fillMaxHeight().weight(1f),
+            verticalArrangement = Arrangement.SpaceAround,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(if (graphicalViewModel.isRunning) "Stop" else "Start")
+            Box(
+                modifier = Modifier.fillMaxWidth().height(200.dp).weight(0.25f),
+                contentAlignment = Alignment.Center
+            ) {
+                Button(
+                    onClick = { startGraphical(activity = activity, graphicalViewModel = graphicalViewModel) }
+                ) {
+                    Text(if (graphicalViewModel.isRunning) "Stop" else "Start")
+                }
+            }
+            // the box displaying the selected points
+            Column(
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            ) {
+                Text (
+                    modifier = Modifier.fillMaxSize().weight(0.1f),
+
+                    style = TextStyle(fontSize = 15.sp, color = WHITE_COLOR),
+                    text = "Data points selected"
+                )
+                Box(
+                    modifier = Modifier.fillMaxSize().weight(2f)
+                        .border(2.dp, WHITE_COLOR)
+                ) {
+
+                }
+            }
         }
     }
 }

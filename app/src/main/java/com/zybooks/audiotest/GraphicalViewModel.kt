@@ -72,7 +72,10 @@ class GraphicalViewModel : ViewModel() {
     fun resizeGraph() {
         if (smoothedData != null) {
             Log.d("Resize", "Resize")
-            val currentData = smoothedData?: return
+            val currentData = smoothedData?.toList() ?: return
+            // Also need to consider the recomposition due to generating the path,
+            // set smoothedData state variable to null in order to stop the infinite loop
+            smoothedData = null
 
             // Find the max amplitude in the smoothed data
             val dataMax = currentData.maxOrNull() ?: 1f
@@ -90,7 +93,7 @@ class GraphicalViewModel : ViewModel() {
             // update the YAxis labels, will automatically recompose in GraphicalScreen.kt
             getYAxisLabelValues()
 
-            path = path!!.apply {
+            path = Path().apply {
                 reset()
                 moveTo(0f, height / 2) // Start from the middle
 
