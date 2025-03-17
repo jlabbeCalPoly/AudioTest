@@ -56,7 +56,7 @@ fun GraphicalScreen (
     if (config.orientation == Configuration.ORIENTATION_PORTRAIT) {
         PortraitOrientationLayout(modifier, graphicalViewModel, activity)
     } else { // The orientation is in landscape mode
-
+        LandscapeOrientationLayout(modifier, graphicalViewModel, activity)
     }
 }
 
@@ -134,7 +134,69 @@ fun LandscapeOrientationLayout(
     graphicalViewModel: GraphicalViewModel = viewModel(),
     activity: Activity
 ) {
+    Row (
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth().height(200.dp).weight(0.25f),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = { startGraphical(activity = activity, graphicalViewModel = graphicalViewModel) }
+            ) {
+                Text(if (graphicalViewModel.isRunning) "Stop" else "Start")
+            }
+        }
 
+        Row(
+            modifier = Modifier.fillMaxWidth().height(200.dp).padding(10.dp).weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // The y-axis labels on the left side of the graph
+            Column(
+                modifier = Modifier
+                    .width(50.dp)
+                    .height(200.dp)
+                    .padding(end = 20.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.End
+            ) {
+                if (graphicalViewModel.yAxisLabels != null) {
+                    graphicalViewModel.yAxisLabels!!.map { value ->
+                        Text(
+                            text = String.format("%.2f", value),
+                            style = TextStyle(fontSize = 10.sp, color = Color.DarkGray),
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+            // the graph
+            Box(
+                modifier = Modifier
+                    .height(200.dp)
+                    .border(2.dp, WHITE_COLOR)
+            ) {
+                Canvas(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // determine the size of the graph, needed to ensure that
+                    // the generated paths stay within the bounds
+                    graphicalViewModel.setGraphSize(size.width, size.height)
+
+                    // Draw the waveform path
+                    if(graphicalViewModel.path != null) {
+                        drawPath(
+                            graphicalViewModel.path!!,
+                            color = BLUE_COLOR,
+                            style = Stroke(width = 3f)
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 fun startGraphical(activity: Activity, graphicalViewModel: GraphicalViewModel) {
