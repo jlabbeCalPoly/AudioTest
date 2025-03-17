@@ -33,9 +33,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 class GraphicalViewModel : ViewModel() {
-    init {
-        Log.d("GraphicalViewModel", "GraphicalViewModel created")
-    }
     // include ? after Job type since graphicalJob may also be null
     private var graphicalJob : Job? = null
 
@@ -63,13 +60,15 @@ class GraphicalViewModel : ViewModel() {
     fun setGraphSize(width: Float, height: Float) {
         this.width = width
         this.height = height
-        // buildPath() will already run if new data is being read in,
-        // no need to recompute it
+        // buildPath() will already run if new data is being read in, so
+        // no need to recompute the path since it'll already be displayed
         if(!isRunning) {
             resizeGraph()
         }
     }
 
+    // This function is only to be ran if the user prompts a
+    // configuration change while the data acquisition is paused
     fun resizeGraph() {
         if (smoothedData != null) {
             Log.d("Resize", "Resize")
@@ -79,9 +78,6 @@ class GraphicalViewModel : ViewModel() {
             val dataMax = currentData.maxOrNull() ?: 1f
             val dataMin = currentData.minOrNull() ?: -1f
 
-            // Update the max and min amplitudes with smoothing
-            // Use a damping factor to gradually adjust the range (prevents too rapid changes)
-            //val dampingFactor = 0.7f
             val currentMaxAmplitude = max(dataMax, 1f)
             val currentMinAmplitude = min(dataMin, -1f)
 
@@ -99,7 +95,6 @@ class GraphicalViewModel : ViewModel() {
                 moveTo(0f, height / 2) // Start from the middle
 
                 for (data in currentData) {
-                    // Scale relative to the dynamic range
                     val offset = data/bound * height/2
                     val yOffset = height/2 + offset
                     xOffset += lineWidth
@@ -112,19 +107,25 @@ class GraphicalViewModel : ViewModel() {
 
     @SuppressLint("MissingPermission")
     fun startGraphical() {
-        // debounce if the graphical display is already running
+        // Microphone/Recording permissions are checked in GraphicalScreen.kt
+        // Debounce if the graphical display is already running
         if(!isRunning) {
             isRunning = true
 
+            // Set up the audio recorder
+            // AudioRecord is being used over MediaRecord since
+            // it's better for real-time audio processing
             val buffer = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
             val recorder = AudioRecord( MediaRecorder.AudioSource.MIC,
-                44100,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                buffer
+                44100,                 // 44100 samples of audio data per second (40,000-48,000 is best practice for high-quality voice recording)
+                AudioFormat.CHANNEL_IN_MONO,         // one audio channel, meaning all audio data captured is combined into one signal
+                AudioFormat.ENCODING_PCM_16BIT,      // Frequencies are stored as shorts, meaning there are ~65000 possible values that can be returned (This is signed, so negative values are also possible)
+                buffer                               // The size of the buffer that can be filled with audio data
             )
             val shortArray = ShortArray(buffer)
 
+            // Read data from the microphone into the shortArray
+            // return the number of values read (Normally ~2800)
             fun readData(): Int? {
                 var readSize : Int? = null
                 try {
@@ -137,6 +138,9 @@ class GraphicalViewModel : ViewModel() {
                 return readSize
             }
 
+            // Currently, each read results in ~2800 different values in the data buffer
+            // Way to many to display in a useful way in our graph
+            // Instead, group nearby data and average them out
             fun smoothData(data: ShortArray, readSize: Int): List<Float> {
                 val chunkSize = readSize / 150
                 val smoothedData = mutableListOf<Float>()
@@ -147,6 +151,8 @@ class GraphicalViewModel : ViewModel() {
                 return smoothedData
             }
 
+            // Build a path to be displayed in a graphical form using the
+            // smoothed data and known width/height/bounds
             fun buildPath(readSize: Int) {
                 var xOffset = 0f
                 val smoothedData = smoothData(shortArray, readSize)
@@ -155,9 +161,7 @@ class GraphicalViewModel : ViewModel() {
                 val dataMax = smoothedData.maxOrNull() ?: 1f
                 val dataMin = smoothedData.minOrNull() ?: -1f
 
-                // Update the max and min amplitudes with smoothing
-                // Use a damping factor to gradually adjust the range (prevents too rapid changes)
-                //val dampingFactor = 0.7f
+                // determine the min/max of the data, used to bound all of the graphical data properly
                 val currentMaxAmplitude = max(dataMax, 1f)
                 val currentMinAmplitude = min(dataMin, -1f)
 
@@ -165,19 +169,22 @@ class GraphicalViewModel : ViewModel() {
                 graphicalAmplitude = max(abs(currentMaxAmplitude), abs(currentMinAmplitude))
 
                 // Calculate scale to fit in view
-                //val amplitudeScale = height / range
                 val lineWidth = width / smoothedData.size
 
                 // update the YAxis labels, will automatically recompose in GraphicalScreen.kt
                 getYAxisLabelValues()
+                // save the smoothedData, this is only actually used when a
+                // reconfiguration occurs while the data acquisition is paused
                 this.smoothedData = smoothedData
 
+                // reset the original path, using the new data to
                 path = path!!.apply {
                     reset()
                     moveTo(0f, height / 2) // Start from the middle
 
                     for (data in smoothedData) {
-                        // Scale relative to the dynamic range
+                        // data/bound represents the height percentage relative to the maximum,
+                        // therefore making sure all paths are within the bounds of the graph
                         val offset = data/bound * height/2
                         val yOffset = height/2 + offset
                         xOffset += lineWidth
@@ -225,5 +232,13 @@ class GraphicalViewModel : ViewModel() {
             labels.add(max - (step * i))
         }
         yAxisLabels = labels
+    }
+
+    // onCleared is called whenever the viewModel is no longer in use
+    // prevent memory leaks
+    @Override
+    override fun onCleared() {
+        super.onCleared()
+        graphicalJob?.cancel()
     }
 }

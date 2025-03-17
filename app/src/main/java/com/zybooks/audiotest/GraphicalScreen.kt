@@ -75,6 +75,7 @@ fun PortraitOrientationLayout(
             modifier = Modifier.fillMaxWidth().height(200.dp).padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // The y-axis labels on the left side of the graph
             Column(
                 modifier = Modifier
                     .width(50.dp)
@@ -94,6 +95,7 @@ fun PortraitOrientationLayout(
                     }
                 }
             }
+            // the graph
             Box(
                 modifier = Modifier
                     .height(200.dp)
