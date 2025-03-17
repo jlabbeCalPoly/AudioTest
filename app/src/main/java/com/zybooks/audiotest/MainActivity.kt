@@ -61,4 +61,11 @@ class MainActivity: ComponentActivity() {
             }
         }
     }
+
+    // Runs each time the activity restarts
+    // Useful since it's ran each time a config change occurs
+    override fun onStart() {
+        super.onStart()
+        graphicalViewModel.setOnStart()
+    }
 }

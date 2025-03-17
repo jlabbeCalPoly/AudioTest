@@ -164,28 +164,52 @@ fun LandscapeOrientationLayout(
     activity: Activity
 ) {
     Row (
+        modifier = Modifier.padding(20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(200.dp).weight(0.25f),
-            contentAlignment = Alignment.Center
+        Column (
+            Modifier.fillMaxSize().padding(end = 10.dp).weight(0.4f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button(
-                onClick = { startGraphical(activity = activity, graphicalViewModel = graphicalViewModel) }
+            Box(
+                modifier = Modifier.fillMaxSize().weight(0.25f),
+                contentAlignment = Alignment.Center
             ) {
-                Text(if (graphicalViewModel.isRunning) "Stop" else "Start")
+                Button(
+                    onClick = { startGraphical(activity = activity, graphicalViewModel = graphicalViewModel) }
+                ) {
+                    Text(if (graphicalViewModel.isRunning) "Stop" else "Start")
+                }
+            }
+            // the box displaying the selected points
+            Column(
+                modifier = Modifier.fillMaxSize().weight(1f)
+            ) {
+                Text (
+                    modifier = Modifier.fillMaxSize().weight(0.2f),
+
+                    style = TextStyle(fontSize = 15.sp, color = WHITE_COLOR),
+                    text = "Data points selected"
+                )
+                Box(
+                    modifier = Modifier.fillMaxSize().weight(2f)
+                        .border(2.dp, WHITE_COLOR)
+                ) {
+
+                }
             }
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth().height(200.dp).padding(10.dp).weight(1f),
+            modifier = Modifier.fillMaxSize().weight(1f),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // The y-axis labels on the left side of the graph
             Column(
                 modifier = Modifier
-                    .width(50.dp)
-                    .height(200.dp)
+                    .fillMaxHeight()
+                    .width(60.dp)
                     .padding(end = 20.dp),
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.End
@@ -204,7 +228,7 @@ fun LandscapeOrientationLayout(
             // the graph
             Box(
                 modifier = Modifier
-                    .height(200.dp)
+                    .fillMaxSize()
                     .border(2.dp, WHITE_COLOR)
             ) {
                 Canvas(
