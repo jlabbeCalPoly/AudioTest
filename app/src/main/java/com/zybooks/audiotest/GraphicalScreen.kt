@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,6 +57,8 @@ fun PortraitOrientationLayout(
     graphicalViewModel: GraphicalViewModel,
     activity: Activity
 ) {
+    val path by graphicalViewModel.data.collectAsState()
+
     Column (
         modifier = Modifier.fillMaxHeight().padding(top = 50.dp, bottom = 10.dp),
         verticalArrangement = Arrangement.SpaceEvenly,
@@ -98,13 +102,11 @@ fun PortraitOrientationLayout(
                     graphicalViewModel.setGraphSize(size.width, size.height)
 
                     // Draw the waveform path
-                    if(graphicalViewModel.path != null) {
-                        drawPath(
-                            graphicalViewModel.path!!,
-                            color = BLUE_COLOR,
-                            style = Stroke(width = 3f)
-                        )
-                    }
+                   drawPath(
+                       path,
+                       color = BLUE_COLOR,
+                       style = Stroke(width = 3f)
+                   )
                 }
             }
         }
@@ -120,7 +122,7 @@ fun PortraitOrientationLayout(
                 Button(
                     onClick = { startGraphical(activity = activity, graphicalViewModel = graphicalViewModel) }
                 ) {
-                    Text(if (graphicalViewModel.isRunning) "Stop" else "Start")
+                    Text(if (graphicalViewModel.isRecording) "Stop" else "Start")
                 }
             }
             // the box displaying the selected points
@@ -150,6 +152,8 @@ fun LandscapeOrientationLayout(
     graphicalViewModel: GraphicalViewModel = viewModel(),
     activity: Activity
 ) {
+    val path by graphicalViewModel.data.collectAsState()
+
     Row (
         modifier = Modifier.padding(20.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -166,7 +170,7 @@ fun LandscapeOrientationLayout(
                 Button(
                     onClick = { startGraphical(activity = activity, graphicalViewModel = graphicalViewModel) }
                 ) {
-                    Text(if (graphicalViewModel.isRunning) "Stop" else "Start")
+                    Text(if (graphicalViewModel.isRecording) "Stop" else "Start")
                 }
             }
             // the box displaying the selected points
@@ -226,13 +230,11 @@ fun LandscapeOrientationLayout(
                     graphicalViewModel.setGraphSize(size.width, size.height)
 
                     // Draw the waveform path
-                    if(graphicalViewModel.path != null) {
-                        drawPath(
-                            graphicalViewModel.path!!,
-                            color = BLUE_COLOR,
-                            style = Stroke(width = 3f)
-                        )
-                    }
+                    drawPath(
+                        path,
+                        color = BLUE_COLOR,
+                        style = Stroke(width = 3f)
+                    )
                 }
             }
         }
@@ -245,12 +247,12 @@ fun startGraphical(activity: Activity, graphicalViewModel: GraphicalViewModel) {
         val permissionArray = arrayOf(android.Manifest.permission.RECORD_AUDIO)
         ActivityCompat.requestPermissions(activity, permissionArray, 1)
     } else {
-        if(graphicalViewModel.isRunning) {
+        if(graphicalViewModel.isRecording) {
             Log.d("PermissionGranted", "Cancelling graphical")
             graphicalViewModel.cancelGraphical()
         } else {
             Log.d("PermissionGranted", "Starting graphical")
-            graphicalViewModel.startGraphical()
+            graphicalViewModel.startDataAcquisition(20)
         }
     }
 }
