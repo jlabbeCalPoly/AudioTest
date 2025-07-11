@@ -252,7 +252,7 @@ fun startGraphical(activity: Activity, graphicalViewModel: GraphicalViewModel) {
             graphicalViewModel.cancelGraphical()
         } else {
             Log.d("PermissionGranted", "Starting graphical")
-            graphicalViewModel.startDataAcquisition(20)
+            graphicalViewModel.startDataAcquisition(activity, 20)
         }
     }
 }

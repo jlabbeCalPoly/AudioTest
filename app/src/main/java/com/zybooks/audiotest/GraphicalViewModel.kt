@@ -1,10 +1,13 @@
 package com.zybooks.audiotest
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.pm.PackageManager
 import androidx.compose.ui.graphics.Path
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -12,13 +15,18 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -115,8 +123,11 @@ class GraphicalViewModel : ViewModel() {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    fun startDataAcquisition(sampleRate: Int) {
+    fun startDataAcquisition(activity: Activity, sampleRate: Int) {
+        if (ContextCompat.checkSelfPermission(activity, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
         if(!isRecording) {
             isRecording = true
 
@@ -134,8 +145,11 @@ class GraphicalViewModel : ViewModel() {
                 buffer                               // The size of the buffer that can be filled with audio data
             )
 
-            val _rawData = MutableStateFlow(ShortArray(0))
-            val rawData: StateFlow<ShortArray> = _rawData.asStateFlow()
+   //         val _rawData = MutableStateFlow(ShortArray(0))
+   //         val rawData: StateFlow<ShortArray> = _rawData.asStateFlow()
+
+            val _rawData = MutableSharedFlow<ShortArray>()
+            val rawData = _rawData.asSharedFlow()
 
             val samples = (sampleRate * sampleRateInHz) / 1000
             val readBuffer = ShortArray(samples)
@@ -160,12 +174,14 @@ class GraphicalViewModel : ViewModel() {
 
             fun startRecording() {
                 recordingJob = viewModelScope.launch(Dispatchers.IO) {
+                    Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
                     try {
                         recorder.startRecording()
                         while (isRecording) {
                             val readSize = readData()
                             if (readSize > 0) {
-                                _rawData.value = readBuffer.copyOf()
+                               // _rawData.value = readBuffer
+                                _rawData.emit(readBuffer)
                             }
                         }
                     } catch (e: Exception) {
@@ -180,17 +196,20 @@ class GraphicalViewModel : ViewModel() {
             fun startProcessing() {
                 processingJob = viewModelScope.launch(Dispatchers.Default) {
                     rawData.collect { shortsData ->
-                        val floatsData = shortsData.map { it.toFloat() }
+                        //val floatsData = shortsData.map { it.toFloat() }
 
-                        val dataMax = floatsData.maxOrNull() ?: 1f
-                        val dataMin = floatsData.minOrNull() ?: -1f
+                        val dataMax = shortsData.maxOrNull() ?: 1
+                        val dataMin = shortsData.minOrNull() ?: -1
 
                         // determine the min/max of the data, used to bound all of the graphical data properly
-                        val currentMaxAmplitude = max(dataMax, 1f)
-                        val currentMinAmplitude = min(dataMin, -1f)
+                        val dataMaxFloat = dataMax.toFloat()
+                        val dataMinFloat = dataMin.toFloat()
 
-                        var bound = max(abs(dataMax), abs(dataMin))
-                        if (bound.toInt() == 0) {
+                        val currentMaxAmplitude = max(dataMaxFloat, 1f)
+                        val currentMinAmplitude = min(dataMinFloat, -1f)
+
+                        var bound = max(abs(dataMaxFloat), abs(dataMaxFloat))
+                        if (bound == 0f) {
                             bound = 1f
                         }
                         graphicalAmplitude = max(abs(currentMaxAmplitude), abs(currentMinAmplitude))
@@ -199,12 +218,13 @@ class GraphicalViewModel : ViewModel() {
                         // getYAxisLabelValues()
 
                         // Calculate scale to fit in view
-                        val lineWidth = width / floatsData.size
+                        //val lineWidth = width / floatsData.size
+                        val lineWidth = width / shortsData.size
                         var xOffset = 0f
 
                         val path = Path().apply {
                             moveTo(0f, height / 2) // Start from the middle
-                            for (data in floatsData) {
+                            for (data in shortsData) {
                                 val offset = data / bound * height / 2
                                 val yOffset = height / 2 + offset
                                 xOffset += lineWidth
