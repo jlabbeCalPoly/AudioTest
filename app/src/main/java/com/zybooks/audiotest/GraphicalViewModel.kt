@@ -1,42 +1,35 @@
 package com.zybooks.audiotest
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
-import androidx.compose.ui.graphics.Path
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Process
-import android.os.SystemClock
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.app.ActivityCompat
+import androidx.compose.ui.graphics.Path
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
 class GraphicalViewModel : ViewModel() {
-    private val _data = MutableStateFlow(Path())
-    val data : StateFlow<Path> = _data.asStateFlow()
+    private val _data = MutableStateFlow(ShortArray(0))
+    val data : StateFlow<ShortArray> = _data.asStateFlow()
 
     // include ? after Job type since graphicalJob may also be null
     private var recordingJob : Job? = null
@@ -196,43 +189,40 @@ class GraphicalViewModel : ViewModel() {
             fun startProcessing() {
                 processingJob = viewModelScope.launch(Dispatchers.Default) {
                     rawData.collect { shortsData ->
-                        //val floatsData = shortsData.map { it.toFloat() }
+                        _data.value = shortsData.copyOf()
 
-                        val dataMax = shortsData.maxOrNull() ?: 1
-                        val dataMin = shortsData.minOrNull() ?: -1
+                        //val dataMax = shortsData.maxOrNull() ?: 1
+                        //val dataMin = shortsData.minOrNull() ?: -1
 
                         // determine the min/max of the data, used to bound all of the graphical data properly
-                        val dataMaxFloat = dataMax.toFloat()
-                        val dataMinFloat = dataMin.toFloat()
+                        //val dataMaxFloat = dataMax.toFloat()
+                        //val dataMinFloat = dataMin.toFloat()
 
-                        val currentMaxAmplitude = max(dataMaxFloat, 1f)
-                        val currentMinAmplitude = min(dataMinFloat, -1f)
+                        //val currentMaxAmplitude = max(dataMaxFloat, 1f)
+                        //val currentMinAmplitude = min(dataMinFloat, -1f)
 
-                        var bound = max(abs(dataMaxFloat), abs(dataMaxFloat))
-                        if (bound == 0f) {
-                            bound = 1f
-                        }
-                        graphicalAmplitude = max(abs(currentMaxAmplitude), abs(currentMinAmplitude))
-
-                        // update the YAxis labels, will automatically recompose in GraphicalScreen.kt
-                        // getYAxisLabelValues()
+                        //var bound = max(abs(dataMaxFloat), abs(dataMaxFloat))
+                        //if (bound == 0f) {
+                        //    bound = 1f
+                        //}
+                        //graphicalAmplitude = max(abs(currentMaxAmplitude), abs(currentMinAmplitude))
 
                         // Calculate scale to fit in view
                         //val lineWidth = width / floatsData.size
-                        val lineWidth = width / shortsData.size
-                        var xOffset = 0f
+                        //val lineWidth = width / shortsData.size
+                        //var xOffset = 0f
 
-                        val path = Path().apply {
-                            moveTo(0f, height / 2) // Start from the middle
-                            for (data in shortsData) {
-                                val offset = data / bound * height / 2
-                                val yOffset = height / 2 + offset
-                                xOffset += lineWidth
+                        //val path = Path().apply {
+                        //    moveTo(0f, height / 2) // Start from the middle
+                        //    for (data in shortsData) {
+                        //        val offset = data / bound * height / 2
+                        //        val yOffset = height / 2 + offset
+                        //        xOffset += lineWidth
 
-                                lineTo(xOffset, yOffset)
-                            }
-                        }
-                        _data.value = path
+                        //        lineTo(xOffset, yOffset)
+                        //    }
+                        //}
+                        //_data.value = path
                     }
                 }
             }
